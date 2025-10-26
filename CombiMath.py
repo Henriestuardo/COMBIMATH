@@ -102,8 +102,7 @@ def agregar_al_historial(usuario, puntos, nivel, objetivos, tiempo, combo_max):
         'tiempo': tiempo,
         'combo_maximo': combo_max
     }
-    usuario['historial_partidas'].insert(0, partida)  # Agregar al inicio
-    # Mantener solo las últimas 20 partidas
+    usuario['historial_partidas'].insert(0, partida)
     if len(usuario['historial_partidas']) > 20:
         usuario['historial_partidas'] = usuario['historial_partidas'][:20]
 
@@ -132,7 +131,7 @@ logros_info = {
     'nivel_10': {'nombre': 'Leyenda', 'desc': 'Alcanza el nivel 10'},
 }
 
-# CARGAR IMÁGENES (si faltan, se crean superficies de respaldo)
+# CARGAR IMÁGENES
 def cargar_imagen_nave(nombre_archivo, color_fallback):
     try:
         img = pygame.image.load(nombre_archivo)
@@ -316,7 +315,7 @@ def crear_explosion(x, y, color, cantidad=20):
     for _ in range(cantidad):
         particulas.append(Particula(x, y, color))
 
-# Colisiones y utilidades
+# Utilidades
 def verificar_colision_jugador(meteorito):
     return (jugador_x < meteorito.x + meteorito.tamano and
             jugador_x + 50 > meteorito.x and
@@ -366,7 +365,7 @@ def reiniciar_juego():
     tiempo_partida = 0
     estado_juego = JUGANDO
 
-# Botones y rects
+# Botones
 def dibujar_boton(texto, x, y, ancho, alto, color, color_hover):
     mouse_x, mouse_y = pygame.mouse.get_pos()
     mouse_sobre = x < mouse_x < x + ancho and y < mouse_y < y + alto
@@ -401,43 +400,61 @@ def dibujar_seleccion_usuario():
     pantalla.blit(titulo, (ANCHO // 2 - titulo.get_width() // 2, 60))
     pantalla.blit(subtitulo, (ANCHO // 2 - subtitulo.get_width() // 2, 140))
     
-    # Lista de usuarios existentes
     y = 200
     botones_usuarios = []
+    botones_eliminar = []
     
     for nombre_usuario in datos_usuarios["usuarios"]:
         usuario = datos_usuarios["usuarios"][nombre_usuario]
         texto_usuario = fuente.render(f"{nombre_usuario} - Nivel: {usuario['mejor_nivel']} - Puntos: {usuario['mejor_puntuacion']}", True, BLANCO)
         pantalla.blit(texto_usuario, (ANCHO // 2 - texto_usuario.get_width() // 2, y))
         
-        btn_seleccionar = dibujar_boton("SELECCIONAR", ANCHO // 2 - 60, y + 30, 120, 35, VERDE_OSCURO, VERDE)
+        btn_seleccionar = dibujar_boton("SELECCIONAR", ANCHO // 2 - 140, y + 30, 120, 30, VERDE_OSCURO, VERDE)
+        btn_eliminar = dibujar_boton("ELIMINAR", ANCHO // 2 + 20, y + 30, 120, 30, (120, 0, 0), ROJO)
         botones_usuarios.append((nombre_usuario, btn_seleccionar))
+        botones_eliminar.append((nombre_usuario, btn_eliminar))
         y += 80
+    btn_nuevo = dibujar_boton("NUEVO USUARIO", ANCHO // 2 - 100, y + 20, 200, 40, AZUL, CYAN)
     
-    # Botón para crear nuevo usuario
-    btn_nuevo = dibujar_boton("NUEVO USUARIO", ANCHO // 2 - 100, y + 20, 200, 50, AZUL, CYAN)
-    
-    return botones_usuarios, btn_nuevo
+    return botones_usuarios, botones_eliminar, btn_nuevo
 
 def dibujar_crear_usuario():
     fondo_actual = fondos_imagenes['espacio']
     pantalla.blit(fondo_actual, (0, 0))
     overlay = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
-    pygame.draw.rect(overlay, (0, 0, 0, 200), overlay.get_rect())
+    pygame.draw.rect(overlay, (0, 0, 0, 220), overlay.get_rect())
     pantalla.blit(overlay, (0, 0))
     
+    panel_ancho = 500
+    panel_alto = 400
+    panel_x = ANCHO // 2 - panel_ancho // 2
+    panel_y = 135
+    
+    pygame.draw.rect(pantalla, (20, 20, 50, 230), (panel_x, panel_y, panel_ancho, panel_alto), border_radius=15)
+    pygame.draw.rect(pantalla, CYAN, (panel_x, panel_y, panel_ancho, panel_alto), 4, border_radius=15)
+    
     titulo = fuente_titulo.render("NUEVO USUARIO", True, CYAN)
-    pantalla.blit(titulo, (ANCHO // 2 - titulo.get_width() // 2, 100))
+    pantalla.blit(titulo, (ANCHO // 2 - titulo.get_width() // 2, 80))
     
     instruccion = fuente.render("Escribe tu nombre de usuario:", True, BLANCO)
-    pantalla.blit(instruccion, (ANCHO // 2 - instruccion.get_width() // 2, 200))
+    pantalla.blit(instruccion, (ANCHO // 2 - instruccion.get_width() // 2, 180))
     
-    # Campo de texto (simulado)
-    pygame.draw.rect(pantalla, (50, 50, 50), (ANCHO // 2 - 150, 250, 300, 50), border_radius=10)
-    pygame.draw.rect(pantalla, CYAN, (ANCHO // 2 - 150, 250, 300, 50), 3, border_radius=10)
+    info = fuente_pequena.render("(Máximo 15 caracteres)", True, GRIS)
+    pantalla.blit(info, (ANCHO // 2 - info.get_width() // 2, 210))
     
-    btn_crear = dibujar_boton("CREAR USUARIO", ANCHO // 2 - 100, 320, 200, 50, VERDE_OSCURO, VERDE)
-    btn_volver = dibujar_boton("VOLVER", ANCHO // 2 - 100, 390, 200, 50, (80, 0, 0), ROJO)
+    campo_ancho = 350
+    campo_x = ANCHO // 2 - campo_ancho // 2
+    pygame.draw.rect(pantalla, (30, 30, 70), (campo_x, 250, campo_ancho, 55), border_radius=10)
+    pygame.draw.rect(pantalla, CYAN, (campo_x, 250, campo_ancho, 55), 3, border_radius=10)
+    
+    if pygame.time.get_ticks() % 1000 < 500:
+        pygame.draw.line(pantalla, CYAN, (campo_x + 15, 260), (campo_x + 15, 295), 2)
+    
+    btn_crear = dibujar_boton("CREAR Y JUGAR", ANCHO // 2 - 120, 340, 240, 55, VERDE_OSCURO, VERDE)
+    btn_volver = dibujar_boton("CANCELAR", ANCHO // 2 - 100, 420, 200, 50, (80, 0, 0), ROJO)
+    
+    consejo = fuente_pequena.render("Presiona ENTER para crear o ESC para cancelar", True, AMARILLO)
+    pantalla.blit(consejo, (ANCHO // 2 - consejo.get_width() // 2, 500))
     
     return btn_crear, btn_volver
 
@@ -462,7 +479,6 @@ def dibujar_menu():
     pantalla.blit(titulo, (ANCHO // 2 - titulo.get_width() // 2, 60))
     pantalla.blit(subtitulo, (ANCHO // 2 - subtitulo.get_width() // 2, 140))
     
-    # Información del usuario
     texto_usuario = fuente.render(f"Jugador: {datos_usuarios['usuario_actual']}", True, BLANCO)
     pantalla.blit(texto_usuario, (ANCHO // 2 - texto_usuario.get_width() // 2, 190))
     
@@ -470,17 +486,17 @@ def dibujar_menu():
     texto_monedas = fuente_grande.render(str(usuario_actual['monedas']), True, DORADO)
     pantalla.blit(texto_monedas, (ANCHO // 2 - 30, 215))
     
-    # Botones del menú
-    btn_jugar = dibujar_boton("JUGAR", ANCHO // 2 - 100, 280, 200, 50, VERDE_OSCURO, VERDE)
-    btn_tienda = dibujar_boton("TIENDA", ANCHO // 2 - 100, 345, 200, 50, (100, 50, 0), NARANJA)
-    btn_logros = dibujar_boton("LOGROS", ANCHO // 2 - 100, 410, 200, 50, (80, 0, 120), MORADO)
-    btn_estadisticas = dibujar_boton("ESTADÍSTICAS", ANCHO // 2 - 100, 475, 200, 50, (0, 80, 120), CYAN)
-    btn_como_jugar = dibujar_boton("¿CÓMO JUGAR?", ANCHO // 2 - 100, 540, 200, 50, (80, 80, 0), AMARILLO)
+    btn_jugar = dibujar_boton("JUGAR", ANCHO // 2 - 100, 265, 200, 50, VERDE_OSCURO, VERDE)
+    btn_tienda = dibujar_boton("TIENDA", ANCHO // 2 - 100, 330, 200, 50, (100, 50, 0), NARANJA)
+    btn_logros = dibujar_boton("LOGROS", ANCHO // 2 - 100, 395, 200, 50, (80, 0, 120), MORADO)
+    btn_estadisticas = dibujar_boton("ESTADÍSTICAS", ANCHO // 2 - 100, 460, 200, 50, (0, 80, 120), CYAN)
+    btn_como_jugar = dibujar_boton("¿CÓMO JUGAR?", ANCHO // 2 - 100, 525, 200, 50, (80, 80, 0), AMARILLO)
+    btn_usuarios = dibujar_boton("CAMBIAR USUARIO", ANCHO // 2 - 100, 590, 200, 50, (60, 60, 100), (100, 100, 180))
     
     inst = fuente_pequena.render("Suma números para alcanzar el objetivo", True, BLANCO)
-    pantalla.blit(inst, (ANCHO // 2 - inst.get_width() // 2, 600))
+    pantalla.blit(inst, (ANCHO // 2 - inst.get_width() // 2, 650))
     
-    return btn_jugar, btn_tienda, btn_logros, btn_estadisticas, btn_como_jugar
+    return btn_jugar, btn_tienda, btn_logros, btn_estadisticas, btn_como_jugar, btn_usuarios
 
 def dibujar_estadisticas():
     usuario_actual = datos_usuarios["usuarios"][datos_usuarios["usuario_actual"]]
@@ -602,29 +618,38 @@ def dibujar_tienda():
     x_fondo = 60
     for fondo_id, fondo_info in catalogo_fondos.items():
         desbloqueado = fondo_id in usuario_actual['fondos_desbloqueados']
+
         equipado = fondo_id == usuario_actual['fondo_actual']
         color_cuadro = VERDE if equipado else ((60, 60, 80) if desbloqueado else (40, 40, 60))
+
         pygame.draw.rect(pantalla, color_cuadro, (x_fondo, 420, 220, 125), border_radius=10)
         pygame.draw.rect(pantalla, DORADO if equipado else BLANCO, (x_fondo, 420, 220, 125), 3, border_radius=10)
+
         mini_fondo = pygame.transform.scale(fondos_imagenes[fondo_id], (200, 65))
         pantalla.blit(mini_fondo, (x_fondo + 10, 430))
+
         texto_nombre = fuente_pequena.render(fondo_info['nombre'], True, BLANCO)
-        pantalla.blit(texto_nombre, (x_fondo + 110 - texto_nombre.get_width() // 2, 500))
+        pantalla.blit(texto_nombre, (x_fondo + 110 - texto_nombre.get_width() // 2, 520))
+
         if equipado:
-            mouse_sobre = dibujar_boton("EQUIPADO", x_fondo + 60, 520, 100, 25, VERDE, VERDE)
+            mouse_sobre = dibujar_boton("EQUIPADO", x_fondo + 50, 540, 120, 35, VERDE, VERDE)
         elif desbloqueado:
-            mouse_sobre = dibujar_boton("EQUIPAR", x_fondo + 60, 520, 100, 25, AZUL, CYAN)
+            mouse_sobre = dibujar_boton("EQUIPAR", x_fondo + 50, 540, 120, 35, AZUL, CYAN)
         else:
-            btn_rect = pygame.Rect(x_fondo + 60, 520, 100, 25)
+            btn_rect = pygame.Rect(x_fondo + 60, 540, 120, 35)
             mouse_x, mouse_y = pygame.mouse.get_pos()
             mouse_sobre = btn_rect.collidepoint(mouse_x, mouse_y)
             btn_color = AMARILLO if mouse_sobre else NARANJA
+
             pygame.draw.rect(pantalla, btn_color, btn_rect, border_radius=10)
             pygame.draw.rect(pantalla, BLANCO, btn_rect, 2, border_radius=10)
-            mini_moneda = pygame.transform.scale(moneda_imagen, (18, 18))
-            pantalla.blit(mini_moneda, (x_fondo + 75, 523))
+
+            mini_moneda = pygame.transform.scale(moneda_imagen, (20, 20))
+            pantalla.blit(mini_moneda, (x_fondo + 65, 547))
+
             texto_precio = fuente.render(str(fondo_info['precio']), True, BLANCO)
-            pantalla.blit(texto_precio, (x_fondo + 97, 521))
+            pantalla.blit(texto_precio, (x_fondo + 90, 545))
+
         botones_fondos.append((fondo_id, mouse_sobre, desbloqueado, equipado))
         x_fondo += 240
 
@@ -758,40 +783,48 @@ def dibujar_como_jugar():
     pantalla.blit(overlay, (0, 0))
 
     instrucciones = [
-        "CONTROLES:",
-        "• Flechas o teclas A/D: Mover nave",
-        "• Los objetivos una vez cumplidos se entregaran automáticamente",
-        "• ESC: Pausar el juego",
+        "CONTROLES PRINCIPALES:",
+        "Teclas A/D o Flechas: Mover nave izquierda/derecha",
+        "Click en números: Seleccionar para sumar",
+        "Tecla ESPACIO: Entregar objetivo si esta en inventario",
+        "Tecla ESC: Pausar el juego",
+        "Tecla R: Reiniciar partida",
+        "Tecla M: Volver al menu principal",
         "",
-        "OBJETIVO:",
-        "• Atrapa meteoritos con números",
-        "• Combina números haciendo clic en ellos",
-        "• Alcanza el número objetivo para ganar puntos",
+        "OBJETIVO DEL JUEGO:",
+        "Atrapar meteoritos con números",
+        "Combinar números haciendo clic en ellos",
+        "Alcanzar el número objetivo para ganar puntos",
+        "Completar objetivos para subir de nivel",
         "",
-        "ESTRATEGIA:",
-        "• Combina números pequeños para hacer espacio",
-        "• Mantén combo alto para más monedas",
-        "• Cuida tus vidas - si se acaban, game over",
+        "MECANICAS IMPORTANTES:",
+        "Inventario maximo: 8 numeros",
+        "Pierdes vida si un meteorito llega al suelo",
+        "Ganas vida al completar un objetivo",
+        "Combo aumenta con objetivos consecutivos",
+        "Combo alto da mas monedas y puntos",
         "",
         "RECOMPENSAS:",
-        "• Monedas para comprar naves y fondos",
-        "• Logros por tus hazañas",
-        "• Sube de nivel para mayor desafío"
+        "Monedas para comprar naves y fondos",
+        "Logros por alcanzar metas especificas",
+        "Mejora tu puntuacion maxima"
     ]
 
-    y = 35
+    y = 40
     for linea in instrucciones:
-        if ":" in linea:
+        if ":" in linea and not linea.startswith(" "):
+            # Títulos de sección
             texto = fuente.render(linea, True, CYAN)
-            pantalla.blit(texto, (80, y))
-            y += 35
+            pantalla.blit(texto, (ANCHO // 2 - texto.get_width() // 2, y))
+            y += 40
         elif linea == "":
-            y += 15
+            # Espacio entre secciones
+            y += 20
         else:
+            # Instrucciones normales
             texto = fuente_pequena.render(linea, True, BLANCO)
-            pygame.draw.circle(pantalla, AMARILLO, (70, y + 8), 4)
-            pantalla.blit(texto, (90, y))
-            y += 30
+            pantalla.blit(texto, (100, y))
+            y += 28
 
     btn_volver = dibujar_boton("VOLVER", ANCHO // 2 - 100, ALTO - 80, 200, 50, (80, 0, 0), ROJO)
     return btn_volver
@@ -934,18 +967,33 @@ while ejecutando:
                         creando_usuario = False
                         nombre_nuevo_usuario = ""
                 else:
-                    botones_usuarios, btn_nuevo = dibujar_seleccion_usuario()
+                    botones_usuarios, botones_eliminar, btn_nuevo = dibujar_seleccion_usuario()
                     for nombre_usuario, btn_seleccionar in botones_usuarios:
                         if btn_seleccionar:
                             datos_usuarios["usuario_actual"] = nombre_usuario
                             guardar_usuarios(datos_usuarios)
                             estado_juego = MENU
                             break
+                    # Manejar eliminación de usuario
+                    for nombre_usuario, btn_eliminar in botones_eliminar:
+                        if btn_eliminar:
+                            if len(datos_usuarios["usuarios"]) > 1:  # No eliminar si es el único usuario
+                                del datos_usuarios["usuarios"][nombre_usuario]
+                                if datos_usuarios["usuario_actual"] == nombre_usuario:
+                                    # Si eliminamos el usuario actual, seleccionar otro
+                                    otros_usuarios = list(datos_usuarios["usuarios"].keys())
+                                    datos_usuarios["usuario_actual"] = otros_usuarios[0] if otros_usuarios else None
+                                guardar_usuarios(datos_usuarios)
+                                mostrar_mensaje(f"Usuario {nombre_usuario} eliminado", NARANJA, 90)
+                            else:
+                                mostrar_mensaje("No puedes eliminar el único usuario", ROJO, 90)
+                            break
+
                     if btn_nuevo:
                         creando_usuario = True
             
             elif estado_juego == MENU:
-                btn_jugar, btn_tienda, btn_logros, btn_estadisticas, btn_como_jugar = dibujar_menu()
+                btn_jugar, btn_tienda, btn_logros, btn_estadisticas, btn_como_jugar, btn_usuarios = dibujar_menu()
                 if btn_jugar:
                     try:
                         pygame.mixer.music.load(RUTA_MUSICA_JUEGO)
@@ -962,6 +1010,8 @@ while ejecutando:
                     estado_juego = ESTADISTICAS
                 elif btn_como_jugar:
                     estado_juego = COMO_JUGAR
+                elif btn_usuarios: 
+                    estado_juego = SELECCION_USUARIO
             
             elif estado_juego == ESTADISTICAS:
                 btn_historial, btn_volver = dibujar_estadisticas()
