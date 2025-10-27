@@ -103,6 +103,7 @@ def agregar_al_historial(usuario, puntos, nivel, objetivos, tiempo, combo_max):
         'combo_maximo': combo_max
     }
     usuario['historial_partidas'].insert(0, partida)
+
     if len(usuario['historial_partidas']) > 20:
         usuario['historial_partidas'] = usuario['historial_partidas'][:20]
 
@@ -136,12 +137,15 @@ def cargar_imagen_nave(nombre_archivo, color_fallback):
     try:
         img = pygame.image.load(nombre_archivo)
         return pygame.transform.scale(img, (50, 40))
+    
     except Exception:
         surf = pygame.Surface((50, 40), pygame.SRCALPHA)
         pygame.draw.rect(surf, (50, 50, 50), (0, 0, 50, 40))
         pygame.draw.rect(surf, color_fallback, (0, 0, 50, 40), 2)
+
         fuente_temp = pygame.font.Font(None, 32)
         texto = fuente_temp.render("?", True, color_fallback)
+
         surf.blit(texto, (18, 8))
         return surf
 
@@ -149,9 +153,11 @@ def cargar_imagen_fondo(nombre_archivo, color_base=(5, 5, 25)):
     try:
         img = pygame.image.load(nombre_archivo)
         return pygame.transform.scale(img, (ANCHO, ALTO))
+    
     except Exception:
         surf = pygame.Surface((ANCHO, ALTO))
         surf.fill(color_base)
+
         for _ in range(100):
             x, y = random.randint(0, ANCHO), random.randint(0, ALTO)
             pygame.draw.circle(surf, BLANCO, (x, y), random.randint(1, 2))
@@ -173,6 +179,7 @@ fondos_imagenes = {
 try:
     corazon_imagen = pygame.image.load("Corazon.png")
     corazon_imagen = pygame.transform.scale(corazon_imagen, (22, 22))
+
 except Exception:
     corazon_imagen = pygame.Surface((22, 22), pygame.SRCALPHA)
     pygame.draw.circle(corazon_imagen, ROJO, (7, 9), 6)
@@ -182,6 +189,7 @@ except Exception:
 try:
     moneda_imagen = pygame.image.load("moneda.png")
     moneda_imagen = pygame.transform.scale(moneda_imagen, (20, 20))
+
 except Exception:
     moneda_imagen = pygame.Surface((20, 20), pygame.SRCALPHA)
     pygame.draw.circle(moneda_imagen, DORADO, (10, 10), 10)
@@ -190,6 +198,7 @@ except Exception:
 try:
     basurero_imagen = pygame.image.load("basurero.png")
     basurero_imagen = pygame.transform.scale(basurero_imagen, (40, 40))
+
 except Exception:
     basurero_imagen = pygame.Surface((40, 40), pygame.SRCALPHA)
     pygame.draw.rect(basurero_imagen, (100, 100, 100), (5, 5, 30, 5), border_radius=2)
@@ -233,6 +242,7 @@ COMO_JUGAR = 6
 SELECCION_USUARIO = 7
 ESTADISTICAS = 8
 HISTORIAL = 9
+INSTRUCCIONES_POPUP = 10 
 estado_juego = SELECCION_USUARIO
 
 logro_desbloqueado = None
@@ -300,12 +310,15 @@ class Meteorito:
     def dibujar(self):
         escala = 1 + 0.15 * abs(pygame.math.Vector2(0, self.pulsacion).length() % 2 - 1)
         tamano_actual = int(self.tamano * escala)
+
         pygame.draw.circle(pantalla, NARANJA, 
-                         (int(self.x + self.tamano // 2), int(self.y + self.tamano // 2)), 
-                         tamano_actual // 2, 3)
+            (int(self.x + self.tamano // 2), int(self.y + self.tamano // 2)), 
+            tamano_actual // 2, 3)
+        
         pygame.draw.circle(pantalla, (180, 80, 0), 
-                         (int(self.x + self.tamano // 2), int(self.y + self.tamano // 2)), 
-                         tamano_actual // 2 - 3)
+            (int(self.x + self.tamano // 2), int(self.y + self.tamano // 2)), 
+            tamano_actual // 2 - 3)
+        
         texto = fuente_grande.render(str(self.numero), True, BLANCO)
         rect = texto.get_rect(center=(int(self.x + self.tamano // 2), int(self.y + self.tamano // 2)))
         pantalla.blit(texto, rect)
@@ -318,9 +331,9 @@ def crear_explosion(x, y, color, cantidad=20):
 # Utilidades
 def verificar_colision_jugador(meteorito):
     return (jugador_x < meteorito.x + meteorito.tamano and
-            jugador_x + 50 > meteorito.x and
-            jugador_y < meteorito.y + meteorito.tamano and
-            jugador_y + 40 > meteorito.y)
+        jugador_x + 50 > meteorito.x and
+        jugador_y < meteorito.y + meteorito.tamano and
+        jugador_y + 40 > meteorito.y)
 
 def verificar_objetivo_en_inventario():
     return objetivo_actual in inventario
@@ -773,61 +786,99 @@ def dibujar_notificacion_logro():
         pantalla.blit(texto_nombre, (panel_x + panel_ancho // 2 - texto_nombre.get_width() // 2, panel_y + 55))
         pantalla.blit(texto_desc, (panel_x + panel_ancho // 2 - texto_desc.get_width() // 2, panel_y + 80))
 
+def dibujar_popup_instrucciones():
+    # Fondo semitransparente
+    overlay = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
+    pygame.draw.rect(overlay, (0, 0, 0, 180), overlay.get_rect())
+    pantalla.blit(overlay, (0, 0))
+    
+    # Panel del popup - Hazlo más alto para que quepa todo
+    panel_ancho = 700
+    panel_alto = 550
+    panel_x = ANCHO // 2 - panel_ancho // 2
+    panel_y = ALTO // 2 - panel_alto // 2
+    
+    pygame.draw.rect(pantalla, (20, 20, 50), (panel_x, panel_y, panel_ancho, panel_alto), border_radius=15)
+    pygame.draw.rect(pantalla, CYAN, (panel_x, panel_y, panel_ancho, panel_alto), 4, border_radius=15)
+    
+    # Título
+    titulo = fuente_titulo.render("INSTRUCCIONES", True, AMARILLO)
+    pantalla.blit(titulo, (ANCHO // 2 - titulo.get_width() // 2, panel_y + 20))
+    
+    # Instrucciones con scroll
+    instrucciones = [
+        "CONTROLES PRINCIPALES:",
+        "• Teclas A/D o Flechas: Mover nave izquierda/derecha",
+        "• Click en números: Seleccionar para sumar", 
+        "• Tecla ESPACIO: Entregar objetivo si está en inventario",
+        "• Tecla ESC: Pausar el juego",
+        "• Tecla R: Reiniciar partida",
+        "• Tecla M: Volver al menú principal",
+        "",
+        "OBJETIVO DEL JUEGO:",
+        "• Atrapar meteoritos con números",
+        "• Combinar números haciendo clic en ellos",
+        "• Alcanzar el número objetivo para ganar puntos",
+        "• Completar objetivos para subir de nivel",
+        "• Los objetivos están ubicados en la parte superior izquierda"
+        ""
+    ]
+    
+    area_texto_y = panel_y + 70
+    area_texto_alto = 400 
+    area_texto_x = panel_x + 20
+    area_texto_ancho = panel_ancho - 40
+    
+    # Dibujar área de texto
+    pygame.draw.rect(pantalla, (10, 15, 30), (area_texto_x, area_texto_y, area_texto_ancho, area_texto_alto), border_radius=10)
+    
+    # Dibujar instrucciones
+    y = area_texto_y + 20
+    for linea in instrucciones:
+        if ":" in linea and not linea.startswith(" "):
+            texto = fuente.render(linea, True, CYAN)
+            pantalla.blit(texto, (area_texto_x + 40, y))
+            y += 35
+        elif linea == "":
+            y += 15
+        else:
+            texto = fuente_pequena.render(linea, True, BLANCO)
+            pantalla.blit(texto, (area_texto_x + 50, y))
+            y += 25
+            
+            # Si el texto se sale de la pantalla, detén el dibujo
+            if y > area_texto_y + area_texto_alto - 30:
+                break  # Esto evitará que se dibuje fuera del área
+    
+    # Botón de cerrar
+    btn_cerrar = dibujar_boton("ENTENDIDO", ANCHO // 2 - 100, panel_y + panel_alto - 60, 200, 50, VERDE_OSCURO, VERDE)
+    return btn_cerrar
+
 def dibujar_como_jugar():
     usuario_actual = datos_usuarios["usuarios"][datos_usuarios["usuario_actual"]]
     fondo_actual = fondos_imagenes[usuario_actual['fondo_actual']]
     pantalla.blit(fondo_actual, (0, 0))
-
     overlay = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
     pygame.draw.rect(overlay, (10, 15, 40, 220), overlay.get_rect())
     pantalla.blit(overlay, (0, 0))
-
-    instrucciones = [
-        "CONTROLES PRINCIPALES:",
-        "Teclas A/D o Flechas: Mover nave izquierda/derecha",
-        "Click en números: Seleccionar para sumar",
-        "Tecla ESPACIO: Entregar objetivo si esta en inventario",
-        "Tecla ESC: Pausar el juego",
-        "Tecla R: Reiniciar partida",
-        "Tecla M: Volver al menu principal",
-        "",
-        "OBJETIVO DEL JUEGO:",
-        "Atrapar meteoritos con números",
-        "Combinar números haciendo clic en ellos",
-        "Alcanzar el número objetivo para ganar puntos",
-        "Completar objetivos para subir de nivel",
-        "",
-        "MECANICAS IMPORTANTES:",
-        "Inventario maximo: 8 numeros",
-        "Pierdes vida si un meteorito llega al suelo",
-        "Ganas vida al completar un objetivo",
-        "Combo aumenta con objetivos consecutivos",
-        "Combo alto da mas monedas y puntos",
-        "",
-        "RECOMPENSAS:",
-        "Monedas para comprar naves y fondos",
-        "Logros por alcanzar metas especificas",
-        "Mejora tu puntuacion maxima"
-    ]
-
-    y = 40
-    for linea in instrucciones:
-        if ":" in linea and not linea.startswith(" "):
-            # Títulos de sección
-            texto = fuente.render(linea, True, CYAN)
-            pantalla.blit(texto, (ANCHO // 2 - texto.get_width() // 2, y))
-            y += 40
-        elif linea == "":
-            # Espacio entre secciones
-            y += 20
-        else:
-            # Instrucciones normales
-            texto = fuente_pequena.render(linea, True, BLANCO)
-            pantalla.blit(texto, (100, y))
-            y += 28
-
-    btn_volver = dibujar_boton("VOLVER", ANCHO // 2 - 100, ALTO - 80, 200, 50, (80, 0, 0), ROJO)
-    return btn_volver
+    
+    # Solo mostrar un mensaje simple y el botón
+    texto_titulo = fuente_titulo.render("¿CÓMO JUGAR?", True, AMARILLO)
+    pantalla.blit(texto_titulo, (ANCHO // 2 - texto_titulo.get_width() // 2, 150))
+    
+    # Cambiar el estado directamente al hacer clic en el área del título o un botón pequeño
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    rect_titulo = texto_titulo.get_rect(center=(ANCHO // 2, 150))
+    
+    # Dibuja un botón más pequeño y claro
+    btn_ver = dibujar_boton("VER INSTRUCCIONES", ANCHO // 2 - 120, 250, 240, 50, AZUL, CYAN)
+    
+    # Opcional: También puedes hacer que al hacer clic en cualquier parte del panel se abran las instrucciones
+    # Pero por simplicidad, usaremos el botón.
+    
+    btn_volver = dibujar_boton("VOLVER", ANCHO // 2 - 100, 350, 200, 50, (80, 0, 0), ROJO)
+    
+    return btn_ver, btn_volver
 
 # Variables de ejecución
 ejecutando = True
@@ -1077,10 +1128,16 @@ while ejecutando:
                     estado_juego = MENU
             
             elif estado_juego == COMO_JUGAR:
-                btn_volver = dibujar_como_jugar()
-                if btn_volver:
+                btn_ver, btn_volver = dibujar_como_jugar()
+                if btn_ver:  # Al hacer clic en "VER INSTRUCCIONES"
+                    estado_juego = INSTRUCCIONES_POPUP  # Cambia directamente al popup
+                elif btn_volver:
                     estado_juego = MENU
-            
+            elif estado_juego == INSTRUCCIONES_POPUP:
+                btn_cerrar = dibujar_popup_instrucciones()
+                if btn_cerrar:
+                    estado_juego = COMO_JUGAR
+
             elif estado_juego == GAME_OVER:
                 if ANCHO // 2 - 100 < mouse_x < ANCHO // 2 + 100 and 450 < mouse_y < 500:
                     reiniciar_juego()
@@ -1262,6 +1319,12 @@ while ejecutando:
     
     elif estado_juego == COMO_JUGAR:
         dibujar_como_jugar()
+
+    elif estado_juego == INSTRUCCIONES_POPUP:
+        # Dibujar la pantalla de "Cómo jugar" de fondo
+        dibujar_como_jugar()
+        # Dibujar el popup encima
+        dibujar_popup_instrucciones()
     
     elif estado_juego in [JUGANDO, PAUSADO]:
         for particula in particulas:
@@ -1314,8 +1377,10 @@ while ejecutando:
         
         if tiempo_mensaje > 0:
             alpha = min(255, tiempo_mensaje * 3)
+
             s_mensaje = pygame.Surface((ANCHO, 50), pygame.SRCALPHA)
             pygame.draw.rect(s_mensaje, (0, 0, 0, min(200, alpha)), (0, 0, ANCHO, 50), border_radius=10)
+
             texto_msg = fuente.render(mensaje_actual, True, color_mensaje)
             rect_msg = texto_msg.get_rect(center=(ANCHO // 2, 25))
             pantalla.blit(s_mensaje, (0, 175))
